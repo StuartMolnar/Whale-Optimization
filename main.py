@@ -150,7 +150,7 @@ def doNurseOptimization(prefs, optimizer_name='WOA'):
 
   num_days = len(prefs[0])
   dim = NUM_SHIFTS * num_days
-  SearchAgents_no = 15     # edit me
+  SearchAgents_no = 1    # edit me
   Max_iter = 150           # edit me
 
   # runs optimizer (to get answer)
