@@ -150,8 +150,8 @@ def doNurseOptimization(prefs, optimizer_name='WOA'):
 
   num_days = len(prefs[0])
   dim = NUM_SHIFTS * num_days
-  SearchAgents_no = 1    # edit me
-  Max_iter = 150           # edit me
+  SearchAgents_no = 30    # edit me
+  Max_iter = 50           # edit me
 
   # runs optimizer (to get answer)
   raw_woa_ans = woa.WOA(objf, 1, 5, dim, SearchAgents_no, Max_iter)
@@ -161,13 +161,24 @@ def doNurseOptimization(prefs, optimizer_name='WOA'):
   woa_ans = refrangulate(raw_woa_ans_vect, len(prefs[0]))
 
   # says some stuff?  outputs?   whatever?
-  return woa_ans
+  return [woa_ans, raw_woa_ans.best]
 
-schedule = doNurseOptimization(prefs_input)
+results = doNurseOptimization(prefs_input)
 
-for shift in schedule:
+for shift in results[0]:
   print(shift)
 
+print(results[1])
+
+def runTests():
+  pass
+  #test 1
+
+
+  #test 2
+
+
+  #test 3
 
 
 '''
