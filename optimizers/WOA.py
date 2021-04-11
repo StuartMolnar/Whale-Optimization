@@ -63,8 +63,6 @@ def WOA(objf, lb, ub, dim, SearchAgents_no, Max_iter):
                 Positions[i, j] = numpy.clip(Positions[i, j], lb[j], ub[j])
 
             # Calculate objective function for each search agent
-            print('positions:', Positions)
-            print('Positions[{}, :]:'.format(i), Positions[i, :])
             fitness = objf(Positions[i, :])
             
             # Update the leader

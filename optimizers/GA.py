@@ -875,7 +875,7 @@ def GA(objf, lb, ub, dim, popSize, iters):
             )
 
     timerEnd = time.time()
-    s.bestIndividual = bestIndividual
+    s.bestIndividual = ga[0]
     s.endTime = time.strftime("%Y-%m-%d-%H-%M-%S")
     s.executionTime = timerEnd - timerStart
     s.convergence = convergence_curve
