@@ -129,10 +129,12 @@ import optimizers.GA as ga
 
 from pprint import pprint
 import math
+import itertools
+import timeit as time
 
 
 
-def doNurseOptimization(prefs, optimizer_name='WOA'):
+def doNurseOptimization(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
 
   # creates a benchmark function (called objf)
   def objf(x):  # this is a closure, wheeeeee
@@ -150,11 +152,11 @@ def doNurseOptimization(prefs, optimizer_name='WOA'):
 
   num_days = len(prefs[0])
   dim = NUM_SHIFTS * num_days
-  SearchAgents_no = 30    # edit me
-  Max_iter = 50           # edit me
+  #SearchAgents_no = 30    # edit me
+  #Max_iter = 30           # edit me
 
   # runs optimizer (to get answer)
-  raw_woa_ans = woa.WOA(objf, 1, 5, dim, SearchAgents_no, Max_iter)
+  raw_woa_ans = woa.WOA(objf, 1, 5, dim, SearchAgents, Max_iter)
   raw_woa_ans_vect = raw_woa_ans.bestIndividual
 
   raw_woa_ans_vect = [math.floor(elt) for elt in raw_woa_ans_vect]
@@ -162,27 +164,81 @@ def doNurseOptimization(prefs, optimizer_name='WOA'):
 
   # says some stuff?  outputs?   whatever?
   return [woa_ans, raw_woa_ans.best]
-
-results = doNurseOptimization(prefs_input)
+'''
+results = doNurseOptimization(prefs_input, SearchAgents, Max_iter)
 
 for shift in results[0]:
   print(shift)
 
 print(results[1])
+'''
+def runTest1(prefs, searchagents, max_iter, test_iter):
+  #run each set of values multiple times
+  #calculate % accuracy (how many solutions are less than 700 aversion)
 
-def runTests():
+  scores = []
+  num_feasible = 0
+  for i in range(test_iter):
+    score = doNurseOptimization(prefs, searchagents, max_iter)[1]
+    if score < 700:
+      num_feasible += 1
+    scores.append(score)
+
+  percent_feasible = num_feasible / len(scores)
+
+  return [scores, percent_feasible]
+
+#print(runTest1(prefs_input, 30, 30, 10))
+
+def runTest2(prefs, searchagents, max_iter):
+  #run until feasible solution is found, count how many tries it took
+  feasible_solution = None
+  iterations = 0
+
+  while not feasible_solution:
+    solution = doNurseOptimization(prefs, searchagents, max_iter)[1]
+    if solution < 700:
+      feasible_solution = solution
+    iterations += 1
+
+  return [solution, iterations]
+  
+
+
+
+
+def runTest3(prefs, searchagents, max_iter):
   pass
-  #test 1
 
 
-  #test 2
+
+def runTests(pref):
+  import itertools
+  #every combination of searchagents and iterations from 1-100 skipping by 10
+  combinations = [range(1,101, 10), range(1,101, 10)]
+  agent_iter_list = list(itertools.product(*combinations))
+  #------------test 1----------------
+  #results = [[percent_feasible, searchagents, iterations, time_elapsed]...]
+  results = []
+  TEST_ITERATIONS = 10
+  length = len(agent_iter_list)
+  for i in range(length):
+    current_combination = agent_iter_list[i]
+    print('running with', str(current_combination), 'at iteration', str(i), 'of', str(length))
+    start = time.timeit()
+    test_result = runTest1(prefs_input, current_combination[0], current_combination[1], TEST_ITERATIONS)
+    end = time.timeit()
+    results.append([test_result[1], current_combination[0], current_combination[1], end - start])
+
+  return results
 
 
-  #test 3
-
+def convertToCsv():
+  pass
 
 '''
 #------------genetic algorithm section-----------------
+
 
 def calculationTotalAversionGA(prefs, assignment):
   HARD_HATE = len(prefs) * len(prefs[0]) * 20       # 20 is a lot more than 4 (4 is max hate)

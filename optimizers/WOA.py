@@ -20,10 +20,10 @@ def WOA(objf, lb, ub, dim, SearchAgents_no, Max_iter):
     # Max_iter=500
     if not isinstance(lb, list):
         lb = [lb] * dim
-        print('lb:', lb)
+        #print('lb:', lb)
     if not isinstance(ub, list):
         ub = [ub] * dim
-        print('ub:', ub)
+        #print('ub:', ub)
 
     # initialize position vector and score for the leader
     Leader_pos = numpy.zeros(dim)
@@ -44,7 +44,7 @@ def WOA(objf, lb, ub, dim, SearchAgents_no, Max_iter):
     ############################
     s = solution()
 
-    print('WOA is optimizing  "' + objf.__name__ + '"')
+    #print('WOA is optimizing  "' + objf.__name__ + '"')
 
     timerStart = time.time()
     s.startTime = time.strftime("%Y-%m-%d-%H-%M-%S")
@@ -118,10 +118,12 @@ def WOA(objf, lb, ub, dim, SearchAgents_no, Max_iter):
                     )
 
         convergence_curve[t] = Leader_score
+        '''#comments out the print statement on each iteration (print statements cost performance)
         if t % 1 == 0:
             print(
                 ["At iteration " + str(t) + " the best fitness is " + str(Leader_score)]
             )
+        '''
         t = t + 1
 
     timerEnd = time.time()
