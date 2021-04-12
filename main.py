@@ -1,3 +1,15 @@
+import optimizers.WOA as woa
+import optimizers.GA as ga
+
+
+from pprint import pprint
+import math
+import itertools
+import timeit as time
+import datetime
+import csv
+import os
+import numpy as np
 
 '''
 Let's assume nurse prefs are expressed as "aversions", scale of 1-4, where 4 is maximum aversion.
@@ -39,7 +51,17 @@ we want to find the set up of iterations and searchagents that finds us a feasib
 we also want to run the same tests to find this value of iterations and search agents on the genetic algorithm
 and we want to see how the results differ between whale optimization and genetic algorithm
 '''
+#changes woa output to something we can work with
+def refrangulate(arr, stride):
+  ans = []
+  for index, element in enumerate(arr):
+    if index % stride == 0:
+      ans.append([])
+    ans[-1].append(element)
+  return ans
 
+
+#returns the total aversion of a given assignment by matching it against given preferences
 def calculationTotalAversion(prefs, assignment):
   HARD_HATE = len(prefs) * len(prefs[0]) * 20       # 20 is a lot more than 4 (4 is max hate)
   ans = 0
@@ -113,24 +135,6 @@ def calculationTotalAversion(prefs, assignment):
 
   '''
 
-def refrangulate(arr, stride):
-  ans = []
-  for index, element in enumerate(arr):
-    if index % stride == 0:
-      ans.append([])
-    ans[-1].append(element)
-  return ans
-
-
-
-import optimizers.WOA as woa
-import optimizers.GA as ga
-
-
-from pprint import pprint
-import math
-import itertools
-import timeit as time
 
 
 
@@ -165,7 +169,7 @@ def doNurseOptimization(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
   # says some stuff?  outputs?   whatever?
   return [woa_ans, raw_woa_ans.best]
 '''
-results = doNurseOptimization(prefs_input, SearchAgents, Max_iter)
+results = doNurseOptimization(prefs_input, 1000, 5)
 
 for shift in results[0]:
   print(shift)
@@ -194,12 +198,16 @@ def runTest2(prefs, searchagents, max_iter):
   #run until feasible solution is found, count how many tries it took
   feasible_solution = None
   iterations = 0
+  ATTEMPS_ALLOWED = 5
 
   while not feasible_solution:
     solution = doNurseOptimization(prefs, searchagents, max_iter)[1]
     if solution < 700:
       feasible_solution = solution
     iterations += 1
+    if iterations > ATTEMPS_ALLOWED:
+      iterations = str(ATTEMPS_ALLOWED) + '+, no solution found'
+      break
 
   return [solution, iterations]
   
@@ -210,34 +218,141 @@ def runTest2(prefs, searchagents, max_iter):
 def runTest3(prefs, searchagents, max_iter):
   pass
 
+def convertToCsv(results, test, second_column):
+  ct = datetime.datetime.now()
+  ct = str(ct)[0:-10]
+  ct = ct[:-6]+'-'+ct[-5:-3]+'-'+ct[-2:]
+
+  #section to write results to new excel document    
+  newSheetName = ct + '-' + test + '.csv'
+  cwd = os.getcwd()
+  newSheetName = os.path.join(cwd, 'datasheets', newSheetName)
+  pprint(results)
+  results = sorted(results)
+
+  with open(newSheetName, 'w', newline='') as writeFile:
+    writer = csv.writer(writeFile)
+    results.insert(0, ['Total Runs', second_column, 'Search Agents', 'Iterations', 'Time Elapsed'])
+    results.insert(0, ['WOA Test 1'])
 
 
-def runTests(pref):
-  import itertools
-  #every combination of searchagents and iterations from 1-100 skipping by 10
-  combinations = [range(1,101, 10), range(1,101, 10)]
-  agent_iter_list = list(itertools.product(*combinations))
+    for row in results:
+        writer.writerow(row)
+  writeFile.close()  
+
+  print('Results written to', newSheetName)
+
+def runTests(pref, runOne, runTwo, runThree):
+  
+  #this takes too much runtime, just hardcode desirable values instead
+  #every combination of searchagents and iterations from x-y skipping by z
+  COMBINATIONS = [range(1,101, 10), range(1,101, 10)]  
+  AGENT_ITER_LIST_TEMP = list(itertools.product(*COMBINATIONS))
+  AGENT_ITER_LIST = []
+  #maybe iterate over list and remove outlier values at arbitrary number (10k+total iterations maybe)
+  for i in range(len(AGENT_ITER_LIST_TEMP)):
+    if AGENT_ITER_LIST_TEMP[i][0] * AGENT_ITER_LIST_TEMP[i][1] <= 100:
+      AGENT_ITER_LIST.append(AGENT_ITER_LIST_TEMP[i])
+
+  length = len(AGENT_ITER_LIST)
+  print(AGENT_ITER_LIST)
+  #every combination takes factorial runtime, just hardcode desirable values instead
+ 
   #------------test 1----------------
-  #results = [[percent_feasible, searchagents, iterations, time_elapsed]...]
-  results = []
-  TEST_ITERATIONS = 10
-  length = len(agent_iter_list)
-  for i in range(length):
-    current_combination = agent_iter_list[i]
-    print('running with', str(current_combination), 'at iteration', str(i), 'of', str(length))
-    start = time.timeit()
-    test_result = runTest1(prefs_input, current_combination[0], current_combination[1], TEST_ITERATIONS)
-    end = time.timeit()
-    results.append([test_result[1], current_combination[0], current_combination[1], end - start])
+  #results = [[searchagents*iterations, percent_feasible, searchagents, iterations, time_elapsed]...]
+  if runOne:
+    results = []
+    TEST_ITERATIONS = 10
+    for i in range(length):
+      current_combination = AGENT_ITER_LIST[i]
+      print('running test 1 with', str(current_combination), 'at iteration', str(i), 'of', str(length))
+      start = time.timeit()
+      test_result = runTest1(prefs_input, current_combination[0], current_combination[1], TEST_ITERATIONS)
+      end = time.timeit()
+      print(end-start)
+      print(start-end)
+      results.append([current_combination[0] * current_combination[1], str(test_result[1]*100) + '%', current_combination[0], current_combination[1], abs(end - start)])
 
-  return results
+    #sort results by total iterations
+    
+    #pprint(results)
+    #print(results[np.argsort(results[:,0])])
+    convertToCsv(results, 'test1', 'Viable Solutions')
+
+  #------------test 2----------------
+
+  #results = [total runs, tries, search agents, iterations, time elapsed]
+  if runTwo:
+    results = []
+    for i in range(length):
+      current_combination = AGENT_ITER_LIST[i]
+      print('running test 2 with', str(current_combination), 'at iteration', str(i), 'of', str(length))
+      start = time.timeit()
+      test_result = runTest2(prefs_input, current_combination[0], current_combination[1])
+      end = time.timeit()
+      results.append([current_combination[0] * current_combination[1], test_result[1], current_combination[0], current_combination[1], abs(end - start)])
+
+    convertToCsv(results, 'test2', '# of Attempts')
+
+  #------------test 3----------------
+
+# TODO 
+# come up with third test
+# implement tests with genetic algorithm
+# figure out why time is not calculated properly
 
 
-def convertToCsv():
-  pass
+runTests(prefs_input, False, True, False)
+
+
+
+ '''
+  AGENT_ITER_LIST = [
+    #------------
+    [5, 10],
+    [5, 50],
+    [5, 100],
+    [5, 500],
+    [5, 1000],
+    [5, 3000],
+    #
+    [10, 5],
+    [50, 5],
+    [100, 5],
+    [500, 5],
+    [1000, 5],
+    [3000, 5],
+    #------------
+    [15, 10],
+    [15, 50],
+    [15, 100],
+    [15, 500],
+    #
+    [10, 15],
+    [50, 15],
+    [100, 15],
+    [500, 15],
+    #------------
+    [50, 10],
+    [50, 50],
+    [50, 100],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+  ]
+  '''
 
 '''
 #------------genetic algorithm section-----------------
+
 
 
 def calculationTotalAversionGA(prefs, assignment):

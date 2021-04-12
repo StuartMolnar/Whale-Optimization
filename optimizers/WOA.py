@@ -118,7 +118,8 @@ def WOA(objf, lb, ub, dim, SearchAgents_no, Max_iter):
                     )
 
         convergence_curve[t] = Leader_score
-        '''#comments out the print statement on each iteration (print statements cost performance)
+        #comments out the print statement on each iteration (print statements cost performance)
+        '''
         if t % 1 == 0:
             print(
                 ["At iteration " + str(t) + " the best fitness is " + str(Leader_score)]

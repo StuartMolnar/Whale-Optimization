@@ -1,0 +1,21 @@
+WOA Test 1
+Total Runs,# of Attempts,Search Agents,Iterations,Time Elapsed
+1,"5+, no solution found",1,1,0.0014856999999999232
+11,"5+, no solution found",1,11,5.000000000032756e-06
+11,"5+, no solution found",11,1,0.0002534999999994625
+21,"5+, no solution found",1,21,0.00011360000000015802
+21,"5+, no solution found",21,1,2.810000000019741e-05
+31,"5+, no solution found",1,31,0.000958699999999979
+31,"5+, no solution found",31,1,0.0005485000000002849
+41,"5+, no solution found",1,41,0.00014990000000025816
+41,"5+, no solution found",41,1,0.0003044999999999298
+51,"5+, no solution found",1,51,0.0005971000000000171
+51,"5+, no solution found",51,1,2.700000000066538e-05
+61,"5+, no solution found",1,61,0.000219200000000086
+61,"5+, no solution found",61,1,0.0011760000000000659
+71,"5+, no solution found",1,71,0.00038880000000007797
+71,"5+, no solution found",71,1,0.0019182000000004251
+81,"5+, no solution found",1,81,0.0010405000000002218
+81,"5+, no solution found",81,1,4.539999999941813e-05
+91,"5+, no solution found",1,91,0.002301899999999968
+91,"5+, no solution found",91,1,0.00022369999999938273
