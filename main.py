@@ -5,7 +5,7 @@ import optimizers.GA as ga
 from pprint import pprint
 import math
 import itertools
-import timeit as time
+import time
 import datetime
 import csv
 import os
@@ -266,11 +266,9 @@ def runTests(pref, runOne, runTwo, runThree):
     for i in range(length):
       current_combination = AGENT_ITER_LIST[i]
       print('running test 1 with', str(current_combination), 'at iteration', str(i), 'of', str(length))
-      start = time.timeit()
+      start = time.time()
       test_result = runTest1(prefs_input, current_combination[0], current_combination[1], TEST_ITERATIONS)
-      end = time.timeit()
-      print(end-start)
-      print(start-end)
+      end = time.time()
       results.append([current_combination[0] * current_combination[1], str(test_result[1]*100) + '%', current_combination[0], current_combination[1], abs(end - start)])
 
     #sort results by total iterations
@@ -287,9 +285,9 @@ def runTests(pref, runOne, runTwo, runThree):
     for i in range(length):
       current_combination = AGENT_ITER_LIST[i]
       print('running test 2 with', str(current_combination), 'at iteration', str(i), 'of', str(length))
-      start = time.timeit()
+      start = time.time()
       test_result = runTest2(prefs_input, current_combination[0], current_combination[1])
-      end = time.timeit()
+      end = time.time()
       results.append([current_combination[0] * current_combination[1], test_result[1], current_combination[0], current_combination[1], abs(end - start)])
 
     convertToCsv(results, 'test2', '# of Attempts')
@@ -299,7 +297,7 @@ def runTests(pref, runOne, runTwo, runThree):
 # TODO 
 # come up with third test
 # implement tests with genetic algorithm
-# figure out why time is not calculated properly
+# DONE figure out why time is not calculated properly
 
 
 runTests(prefs_input, False, True, False)
