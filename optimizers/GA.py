@@ -840,7 +840,7 @@ def GA(objf, lb, ub, dim, popSize, iters):
         ga[:, i] = numpy.random.uniform(0, 1, popSize) * (ub[i] - lb[i]) + lb[i]
     convergence_curve = numpy.zeros(iters)
 
-    print('GA is optimizing  "' + objf.__name__ + '"')
+    #print('GA is optimizing  "' + objf.__name__ + '"')
 
     timerStart = time.time()
     s.startTime = time.strftime("%Y-%m-%d-%H-%M-%S")
@@ -863,19 +863,23 @@ def GA(objf, lb, ub, dim, popSize, iters):
         ga, scores = sortPopulation(ga, scores)
 
         convergence_curve[l] = bestScore
-
+        '''
         if l % 1 == 0:
             print(
                 [
+                    
                     "At iteration "
                     + str(l + 1)
                     + " the best fitness is "
                     + str(bestScore)
+                    
                 ]
             )
+        '''
 
     timerEnd = time.time()
     s.bestIndividual = ga[0]
+    s.best = bestScore
     s.endTime = time.strftime("%Y-%m-%d-%H-%M-%S")
     s.executionTime = timerEnd - timerStart
     s.convergence = convergence_curve
