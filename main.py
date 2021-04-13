@@ -189,15 +189,15 @@ def doNurseOptimizationGA(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
 
 
 #----------tests-----------
-ATTEMPS_ALLOWED = 100
+ATTEMPS_ALLOWED = 50
 
 def runTest2(prefs, searchagents, max_iter):
   #run until feasible solution is found, count how many tries it took
   feasible_solution = None
   iterations = 0
-  ATTEMPS_ALLOWED = 10
 
   while not feasible_solution:
+    
     solution = doNurseOptimization(prefs, searchagents, max_iter)[1]
     if solution < 700:
       feasible_solution = solution
@@ -263,68 +263,59 @@ def convertToCsv(results, test):
 # this is instead of doing test 1 and test 2, it combines them together
 
 def formatResults(sum_results):
+
+
   pprint(sum_results)
-  end_results = []
-  for inner_length in range(len(sum_results[0])):
+  formatted_res = [[0] * (len(sum_results[0][0])+1) for i in range(len(sum_results[0]))]
+  #pprint(formatted_res)
 
-    temp = []
-    #match rows from every result next to eachother
-    for outer_length in (range(len(sum_results))):
-        temp.append(sum_results[outer_length][inner_length])
 
-    #create a format for calculating the average of rows
-    new_temp = temp[0]
-    if new_temp[1] >= ATTEMPS_ALLOWED:  
-      #new_temp = new_temp[0].append([0].append(new_temp[1:]))
-      new_temp = [new_temp[0]] + [0] + new_temp[1:]
-    else:
-      #new_temp = new_temp[0].append([1].append(new_temp[1:]))
-      new_temp = [new_temp[0]] + [1] + new_temp[1:]
+  for j in range(len(sum_results[0])):
+      formatted_res[j][1] = sum(1 for matrix in sum_results if matrix[j][1] < ATTEMPS_ALLOWED) / len(sum_results)
+      formatted_res[j][2] = sum(matrix[j][1] for matrix in sum_results) / len(sum_results)
+      formatted_res[j][5] = sum(matrix[j][4] for matrix in sum_results) / len(sum_results)
 
-    total = 1
-    for i in range(1, len(temp)):
-      '''
-      print(new_temp)
-      print(new_temp[2])
-      print(temp[i])
-      print(temp[i][2])
-      '''
-      new_temp[2] += temp[i][1]
-      new_temp[5] += temp[i][4]
-      if not (temp[i][1] >= ATTEMPS_ALLOWED):
-        new_temp[1] += 1
+      formatted_res[j][0] = sum_results[0][j][0]
+      formatted_res[j][3] = sum_results[0][j][2]
+      formatted_res[j][4] = sum_results[0][j][3]
 
-      total += 1
-    #end_results = [searchagents*iterations, success_rate, average tries, searchagents, iterations, average time elapsed]
-    #results = [total runs, tries, searchagents, iterations, time]
-
-    new_temp[2] = str(round((new_temp[2] / total), 2))
-    new_temp[5] = str(round((new_temp[5] / total), 2))
-    end_results.append(new_temp)
-    print('---')
-    pprint(end_results)
-    return end_results
+  pprint(formatted_res)
+  return formatted_res
 
 
 def testAlgo():
-  COMBINATIONS = [range(10,21, 10), range(10,21, 10)]  
+  COMBINATIONS = [range(10,3001,10), range(10,3001,10)]  
   AGENT_ITER_LIST_TEMP = list(itertools.product(*COMBINATIONS))
   AGENT_ITER_LIST = []
-  max_iteration = 201#2000
-  min_iteration = 0#200
-  test_iterations = 3
+  max_iteration = 3000
+  min_iteration = 200
+  test_iterations = 25
+
+  
 
   
   for i in range(len(AGENT_ITER_LIST_TEMP)):
     if AGENT_ITER_LIST_TEMP[i][0] * AGENT_ITER_LIST_TEMP[i][1] <= max_iteration and AGENT_ITER_LIST_TEMP[i][0] * AGENT_ITER_LIST_TEMP[i][1] >= min_iteration:
       AGENT_ITER_LIST.append(AGENT_ITER_LIST_TEMP[i])
 
-  length = len(AGENT_ITER_LIST)
   print(AGENT_ITER_LIST)
+  length = len(AGENT_ITER_LIST)
+
+
+  #WHAT IS SUCCESS RATE
+  # testAlgo loops test_iterations
+  # each iteration calls test2
+  # test 2 runs until it finds a solution or breaks at ATTEMPTS_ALLOWED
+  # success rate is how many testAlgo iterations (aka test2 calls) that found a viable solution before breaking
+
+
+
+  #print(AGENT_ITER_LIST)
  
   #------------test----------------
 
   #results = [total runs, tries, search agents, iterations, time elapsed]
+
   #   
   #end_results = [searchagents*iterations, success_rate, average tries, searchagents, iterations, average time elapsed]
 
@@ -336,7 +327,7 @@ def testAlgo():
   sum_results = []
   for iteration in range(test_iterations):
     results = []
-    print('test iteration', i, 'of', test_iterations)
+    print('test iteration', iteration, 'of', test_iterations)
     for i in range(length):
       current_combination = AGENT_ITER_LIST[i]
       print('running test 2 with', str(current_combination), 'at iteration', str(i), 'of', str(length))
@@ -652,3 +643,80 @@ def runTest1GA(prefs, searchagents, max_iter, test_iter):
 
   return [scores, percent_feasible]
 '''
+
+
+''' 
+  sum_results
+  [
+    sum_results[i]
+    [
+      #[total runs, tries, searchagents, iterations, time]
+      [100, 10, 10, 10, 0.6313107013702393], 
+      [200, 5, 20, 10, 0.5595159530639648]],
+    [
+
+      [100, 8, 10, 10, 0.45081615447998047], 
+      [200, 2, 20, 10, 0.2234022617340088]],
+    [
+      [100, 10, 10, 10, 0.6068825721740723], 
+      [200, 1, 20, 10, 0.11021018028259277]
+    ]
+  ]
+
+  =>
+
+  [
+    #[total runs, success_rate, average tries, searchagents, iterations, average time]
+    [100, ignore this part, (tries+tries+tries)/3, 10, 10, (time+time+time)/3]
+    [200, ignore this part, (tries+tries+tries)/3, 10, 10, (time+time+time)/3]
+  ]
+
+'''
+
+'''
+  pprint(sum_results)
+  end_results = []
+  for inner_length in range(len(sum_results[0])):
+
+    temp = []
+    #match rows from every result next to eachother
+    for outer_length in (range(len(sum_results))):
+        temp.append(sum_results[outer_length][inner_length])
+
+    #create a format for calculating the average of rows
+    new_temp = temp[0]
+    if new_temp[1] >= ATTEMPS_ALLOWED:  
+      #new_temp = new_temp[0].append([0].append(new_temp[1:]))
+      new_temp = [new_temp[0]] + [0] + new_temp[1:]
+    else:
+      #new_temp = new_temp[0].append([1].append(new_temp[1:]))
+      new_temp = [new_temp[0]] + [1] + new_temp[1:]
+
+    total = 1
+    for i in range(1, len(temp)):
+      
+      print(new_temp)
+      print(new_temp[2])
+      print(temp[i])
+      print(temp[i][2])
+      
+      new_temp[2] += temp[i][1]
+      new_temp[5] += temp[i][4]
+      if not (temp[i][1] >= ATTEMPS_ALLOWED):
+        new_temp[1] += 1
+
+      total += 1
+
+
+     
+    #end_results = [searchagents*iterations, success_rate, average tries, searchagents, iterations, average time elapsed]
+    #results = [total runs, tries, searchagents, iterations, time]
+
+    new_temp[2] = str(round((new_temp[2] / total), 2))
+    new_temp[5] = str(round((new_temp[5] / total), 2))
+    end_results.append(new_temp)
+    print('---')
+    pprint(end_results)
+
+  '''
+    #return end_results
