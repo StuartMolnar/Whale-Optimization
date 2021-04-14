@@ -189,7 +189,7 @@ def doNurseOptimizationGA(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
 
 
 #----------tests-----------
-ATTEMPS_ALLOWED = 10
+ATTEMPS_ALLOWED = 50
 
 def runTest2(prefs, searchagents, max_iter):
   #run until feasible solution is found, count how many tries it took
@@ -374,7 +374,7 @@ def testAlgo(doWOA, doGA):
     print('GA complete')
   
 
-testAlgo(False, True)
+testAlgo(True, True)
 
 #---------------------------------------------------------------------------------------------------------------------
 #boolean vs continuous problems
