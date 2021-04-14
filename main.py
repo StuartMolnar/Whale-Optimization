@@ -374,7 +374,7 @@ def testAlgo(doWOA, doGA):
     print('GA complete')
   
 
-testAlgo(True, True)
+testAlgo(False, True)
 
 #---------------------------------------------------------------------------------------------------------------------
 #boolean vs continuous problems
