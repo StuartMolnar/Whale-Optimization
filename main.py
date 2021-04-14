@@ -189,24 +189,26 @@ def doNurseOptimizationGA(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
 
 
 #----------tests-----------
-ATTEMPS_ALLOWED = 50
+ATTEMPS_ALLOWED = 10
 
 def runTest2(prefs, searchagents, max_iter):
   #run until feasible solution is found, count how many tries it took
   feasible_solution = None
   iterations = 0
-
+  sum_time = 0
   while not feasible_solution:
-    
+    start = time.time()
     solution = doNurseOptimization(prefs, searchagents, max_iter)[1]
+    end = time.time()
+    sum_time += (end-start)
     if solution < 700:
       feasible_solution = solution
     iterations += 1
     if iterations > ATTEMPS_ALLOWED:
       iterations = ATTEMPS_ALLOWED
       break
-
-  return [solution, iterations]
+  avg_time = sum_time / iterations
+  return [solution, iterations, avg_time]
   
 
 
@@ -214,23 +216,26 @@ def runTest2GA(prefs, searchagents, max_iter):
   #run until feasible solution is found, count how many tries it took
   feasible_solution = None
   iterations = 0
-
+  sum_time = 0
 
   while not feasible_solution:
+    start = time.time()
     solution = doNurseOptimizationGA(prefs, searchagents, max_iter)[1]
+    end = time.time()
+    sum_time += (end-start)
     if solution < 700:
       feasible_solution = solution
     iterations += 1
     if iterations > ATTEMPS_ALLOWED:
       iterations = ATTEMPS_ALLOWED
       break
-
-  return [solution, iterations]
-
-
+  avg_time = sum_time / iterations
+  return [solution, iterations, avg_time]
 
 
-def convertToCsv(results, test):
+
+
+def convertToCsv(results, test, algo):
   #results = total runs, tries, searchagents, iterations, time
   ct = datetime.datetime.now()
   ct = str(ct)[0:-10]
@@ -246,8 +251,8 @@ def convertToCsv(results, test):
   with open(newSheetName, 'w', newline='') as writeFile:
     writer = csv.writer(writeFile)
     #end_results = [searchagents*iterations, success_rate, average tries, searchagents, iterations, average time elapsed]
-    results.insert(0, ['Total Runs', 'Success Rate', 'Average Tries', 'Search Agents', 'Iterations', 'Average Time Elapsed'])
-    results.insert(0, ['WOA Test 1'])
+    results.insert(0, ['Total Runs', 'Success Rate', 'Average Tries', 'Search Agents', 'Iterations', 'Average Time to Find Solution', 'Average Time Elapsed Per WOA (~Avg Total/Tries)'])
+    results.insert(0, [algo, 'Test'])
 
 
     for row in results:
@@ -278,12 +283,13 @@ def formatResults(sum_results):
       formatted_res[j][0] = sum_results[0][j][0]
       formatted_res[j][3] = sum_results[0][j][2]
       formatted_res[j][4] = sum_results[0][j][3]
+      formatted_res[j][6] = sum_results[0][j][5]
 
   pprint(formatted_res)
   return formatted_res
 
 
-def testAlgo():
+def testAlgo(doWOA, doGA):
   COMBINATIONS = [range(10,3001,10), range(10,3001,10)]  
   AGENT_ITER_LIST_TEMP = list(itertools.product(*COMBINATIONS))
   AGENT_ITER_LIST = []
@@ -323,46 +329,54 @@ def testAlgo():
                 # [searchagents*iterations, tries, searchagents, iterations, time elapsed],
                 #  ...
                 # ]
+  
+  if doWOA:
+    sum_results = []
+    for iteration in range(test_iterations):
+      results = []
+      print('test iteration', iteration, 'of', test_iterations)
+      for i in range(length):
+        current_combination = AGENT_ITER_LIST[i]
+        print('running test 2 with', str(current_combination), 'at iteration', str(i), 'of', str(length))
+        start = time.time()
+        test_result = runTest2(prefs_input, current_combination[0], current_combination[1])
+        end = time.time()
+        #total runs, tries, searchagents, iterations, time, avg_time
+        results.append([current_combination[0] * current_combination[1], test_result[1], current_combination[0], current_combination[1], abs(end - start), test_result[2]])
+        
+      sum_results.append(results)
 
-  sum_results = []
-  for iteration in range(test_iterations):
-    results = []
-    print('test iteration', iteration, 'of', test_iterations)
-    for i in range(length):
-      current_combination = AGENT_ITER_LIST[i]
-      print('running test 2 with', str(current_combination), 'at iteration', str(i), 'of', str(length))
-      start = time.time()
-      test_result = runTest2(prefs_input, current_combination[0], current_combination[1])
-      end = time.time()
-      #total runs, tries, searchagents, iterations, time
-      results.append([current_combination[0] * current_combination[1], test_result[1], current_combination[0], current_combination[1], abs(end - start)])
-      
-    sum_results.append(results)
+    end_results = formatResults(sum_results)
 
-  end_results = formatResults(sum_results)
+    convertToCsv(end_results, 'testWOA', 'WOA')
 
-  convertToCsv(end_results, 'test2')
+    print('WOA complete')
 
-  print('WOA complete')
+  
+  if doGA:
+    sum_results = []
+    for iteration in range(test_iterations):
+      results = []
+      print('test iteration', iteration, 'of', test_iterations)
+      for i in range(length):
+        current_combination = AGENT_ITER_LIST[i]
+        print('running test 2 with', str(current_combination), 'at iteration', str(i), 'of', str(length))
+        start = time.time()
+        test_result = runTest2GA(prefs_input, current_combination[0], current_combination[1])
+        end = time.time()
+        results.append([current_combination[0] * current_combination[1], test_result[1], current_combination[0], current_combination[1], abs(end - start), test_result[2]])
+        
+      sum_results.append(results)
 
+    end_results = formatResults(sum_results)
 
-  '''
-  for i in range(test_iterations):
-    results = []
-    for i in range(length):
-      current_combination = AGENT_ITER_LIST[i]
-      print('running test 2 genetic algorithm  with', str(current_combination), 'at iteration', str(i), 'of', str(length))
-      start = time.time()
-      test_result = runTest2GA(prefs_input, current_combination[0], current_combination[1])
-      end = time.time()
-      results.append([current_combination[0] * current_combination[1], test_result[1], current_combination[0], current_combination[1], abs(end - start)])
+    convertToCsv(end_results, 'testGA', 'GA')
 
-    convertToCsv(results, 'test2GA', 'GA', total_iterations)
 
     print('GA complete')
-  '''
+  
 
-testAlgo()
+testAlgo(False, False)
 
 #---------------------------------------------------------------------------------------------------------------------
 #boolean vs continuous problems
