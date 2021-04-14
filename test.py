@@ -174,6 +174,7 @@ ATTEMPS_ALLOWED = 100
   ]
 
 '''
+'''
 formatted_res = [[0] * (len(sum_results[0][0])+1) for i in range(len(sum_results[0]))]
 print(formatted_res)
 
@@ -183,4 +184,5 @@ for j in range(len(sum_results[0])):
     formatted_res[j][2] = sum(matrix[j][1] for matrix in sum_results) / len(sum_results)
     formatted_res[j][5] = sum(matrix[j][4] for matrix in sum_results) / len(sum_results)
     
-    
+'''
+
