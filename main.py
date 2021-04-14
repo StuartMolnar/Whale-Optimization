@@ -298,8 +298,6 @@ def testAlgo(doWOA, doGA):
   test_iterations = 25
 
   
-
-  
   for i in range(len(AGENT_ITER_LIST_TEMP)):
     if AGENT_ITER_LIST_TEMP[i][0] * AGENT_ITER_LIST_TEMP[i][1] <= max_iteration and AGENT_ITER_LIST_TEMP[i][0] * AGENT_ITER_LIST_TEMP[i][1] >= min_iteration:
       AGENT_ITER_LIST.append(AGENT_ITER_LIST_TEMP[i])
