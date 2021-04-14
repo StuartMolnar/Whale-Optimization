@@ -27,6 +27,9 @@ Each nurse cannot work more than 2 shifts over 7 days.
 Every nurse must work at least 1 shift.
 No nurse may work adjacent shifts.
 '''
+
+#GLOBAL VALUES
+
 #nurse preferences for working on a given day. nurses do not have individual shift preferences, only day preferences
 prefs_input = [
     [4, 4, 2, 4, 1, 3, 2],
@@ -36,16 +39,15 @@ prefs_input = [
     [1, 3, 4, 2, 1, 1, 1]
 ]
 
+#how many tries we give our algorithm to find a viable solution
+ATTEMPTS_ALLOWED = 50
 
-#changes woa output to something we can work with
-def refrangulate(arr, stride):
-  ans = []
-  for index, element in enumerate(arr):
-    if index % stride == 0:
-      ans.append([])
-    ans[-1].append(element)
-  return ans
+#how many times we run the whole test to average out the randomness of our results
+TEST_ITERATIONS = 25
 
+
+#-----------------helper functions-------------- 
+# functions which work as a black box, you give input you receive output
 
 #returns the total aversion of a given assignment by matching it against given preferences
 def calculationTotalAversion(prefs, assignment):
@@ -77,7 +79,7 @@ def calculationTotalAversion(prefs, assignment):
     if nurse < 2 or nurse > 3:
       ans += HARD_HATE
 
-  # soft constraints: map current shift to preferences
+  # soft constraints: matches current schedule vs preferences
   nurse_ans = 0
   for shift in assignment:
       for i in range(len(shift)):
@@ -93,7 +95,7 @@ def calculationTotalAversionGA(prefs, assignment):
   ans = 0
 
   # hard constraint: 2 nurses on duty today
-  for day in range(len(prefs[0])):      # 7 days in week
+  for day in range(len(prefs[0])):      
     num_on_duty = sum([assignment[nurse][day] for nurse in range(len(prefs))])
     if num_on_duty != 2:
       ans += HARD_HATE * 10
@@ -107,134 +109,29 @@ def calculationTotalAversionGA(prefs, assignment):
     if num_workdays > 3 or num_workdays < 2:
       nurse_ans += HARD_HATE
 
-    for day in range(len(prefs[0])):      # 7 days in week
+    for day in range(len(prefs[0])):     
       # hard constraint: no adjacent workdays
       if day != 0 and assignment[nurse][day] > 0.5 and assignment[nurse][day-1] > 0.5:
         nurse_ans += HARD_HATE
 
 
-      # soft constraint: read my prefs you jerk, I asked for Tuesdays, I hate Mondays
+      # soft constraints: matches current schedule vs preferences
       nurse_ans += assignment[nurse][day] * prefs[nurse][day]
     ans += nurse_ans
   return ans
 
 
-#-----------run optimization--------------
-
-def doNurseOptimization(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
-
-  # creates a benchmark function (called objf)
-  def objf(x):  # this is a closure, wheeeeee
-    # rounds every element, and then restructures into a rectangle
-    
-    #print('vector:', x)
-    assignment = refrangulate([math.floor(thing) for thing in x], len(prefs[0]))
-    #print('assignment \n', assignment)
-    # print(assignment)
-    #print('assignment \n', assignment)
-    return calculationTotalAversion(prefs, assignment)
-
-  # sets up arguments for optimizer (dim, SearchAgents_no, Max_iter)
-  NUM_SHIFTS = 2
-
-  num_days = len(prefs[0])
-  dim = NUM_SHIFTS * num_days
-  #SearchAgents_no = 30    # edit me
-  #Max_iter = 30           # edit me
-
-  # runs optimizer (to get answer)
-  raw_woa_ans = woa.WOA(objf, 1, 5, dim, SearchAgents, Max_iter)
-  raw_woa_ans_vect = raw_woa_ans.bestIndividual
-
-  raw_woa_ans_vect = [math.floor(elt) for elt in raw_woa_ans_vect]
-  woa_ans = refrangulate(raw_woa_ans_vect, len(prefs[0]))
-
-  # says some stuff?  outputs?   whatever?
-  return [woa_ans, raw_woa_ans.best]
+#changes output to something we can work with
+def restructure(arr, stride):
+  ans = []
+  for index, element in enumerate(arr):
+    if index % stride == 0:
+      ans.append([])
+    ans[-1].append(element)
+  return ans
 
 
-
-def doNurseOptimizationGA(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
-
-  # creates a benchmark function (called objf)
-  def objf(x):  # this is a closure, wheeeeee
-    # rounds every element, and then restructures into a rectangle
-    
-    #print('x \n', x)
-    assignment = refrangulate([round(thing) for thing in x], len(prefs[0]))
-    #print('assignment \n', assignment)
-    # print(assignment)
-    return calculationTotalAversionGA(prefs, assignment)
-
-  # sets up arguments for optimizer (dim, SearchAgents_no, Max_iter)
-  num_nurses = len(prefs)
-  num_days = len(prefs[0])
-  dim = num_nurses * num_days
-  #SearchAgents_no = 30     # FIXME
-  #Max_iter = 50      # FIXME
-
-  # runs optimizer (to get answer)
-  raw_woa_ans = ga.GA(objf, 0, 1, dim, SearchAgents, Max_iter)
-  raw_woa_ans_vect = raw_woa_ans.bestIndividual
-
-  #print('raw_woa_ans_vect \n', raw_woa_ans_vect)
-  raw_woa_ans_vect = [round(elt) for elt in raw_woa_ans_vect]
-  woa_ans = refrangulate(raw_woa_ans_vect, len(prefs[0]))
-
-  # says some stuff?  outputs?   whatever?
-  return [woa_ans, raw_woa_ans.best]
-
-#pprint(doNurseOptimizationGA(prefs_input))
-
-
-
-#----------tests-----------
-ATTEMPS_ALLOWED = 50
-
-def runTest2(prefs, searchagents, max_iter):
-  #run until feasible solution is found, count how many tries it took
-  feasible_solution = None
-  iterations = 0
-  sum_time = 0
-  while not feasible_solution:
-    start = time.time()
-    solution = doNurseOptimization(prefs, searchagents, max_iter)[1]
-    end = time.time()
-    sum_time += (end-start)
-    if solution < 700:
-      feasible_solution = solution
-    iterations += 1
-    if iterations > ATTEMPS_ALLOWED:
-      iterations = ATTEMPS_ALLOWED
-      break
-  avg_time = sum_time / iterations
-  return [solution, iterations, avg_time]
-  
-
-
-def runTest2GA(prefs, searchagents, max_iter):
-  #run until feasible solution is found, count how many tries it took
-  feasible_solution = None
-  iterations = 0
-  sum_time = 0
-
-  while not feasible_solution:
-    start = time.time()
-    solution = doNurseOptimizationGA(prefs, searchagents, max_iter)[1]
-    end = time.time()
-    sum_time += (end-start)
-    if solution < 700:
-      feasible_solution = solution
-    iterations += 1
-    if iterations > ATTEMPS_ALLOWED:
-      iterations = ATTEMPS_ALLOWED
-      break
-  avg_time = sum_time / iterations
-  return [solution, iterations, avg_time]
-
-
-
-
+#takes matrix of results, outputs a csv file
 def convertToCsv(results, test, algo):
   #results = total runs, tries, searchagents, iterations, time
   ct = datetime.datetime.now()
@@ -262,21 +159,13 @@ def convertToCsv(results, test, algo):
   print('Results written to', newSheetName)
 
 
-# TODO work on this, and create a new csv format
-# iterates over some amount, runs test 2 in each iteration
-# returns same as test 2, but feasible_solutions is the amount of times that a solution was returned within the set bounds (say 50 tries allowed)
-# this is instead of doing test 1 and test 2, it combines them together
-
+#takes 3d array of results, joins every matrix and calculates average values
 def formatResults(sum_results):
-
-
-  pprint(sum_results)
+  
   formatted_res = [[0] * (len(sum_results[0][0])+1) for i in range(len(sum_results[0]))]
-  #pprint(formatted_res)
-
 
   for j in range(len(sum_results[0])):
-      formatted_res[j][1] = sum(1 for matrix in sum_results if matrix[j][1] < ATTEMPS_ALLOWED) / len(sum_results)
+      formatted_res[j][1] = sum(1 for matrix in sum_results if matrix[j][1] < ATTEMPTS_ALLOWED) / len(sum_results)
       formatted_res[j][2] = sum(matrix[j][1] for matrix in sum_results) / len(sum_results)
       formatted_res[j][5] = sum(matrix[j][4] for matrix in sum_results) / len(sum_results)
 
@@ -285,17 +174,127 @@ def formatResults(sum_results):
       formatted_res[j][4] = sum_results[0][j][3]
       formatted_res[j][6] = sum_results[0][j][5]
 
-  pprint(formatted_res)
   return formatted_res
 
+#-----------run optimization--------------
+# functions that utilize the algorithms alongside helper functions to actually optimize our schedule
 
+def doNurseOptimization(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
+
+  # creates a benchmark function (called objf)
+  def objf(x): 
+
+    # floors every element, and then restructures into a rectangle    
+    assignment = restructure([math.floor(thing) for thing in x], len(prefs[0]))
+
+
+    return calculationTotalAversion(prefs, assignment)
+
+  # sets up arguments for optimizer (dim, SearchAgents_no, Max_iter)
+  NUM_SHIFTS = 2
+
+  num_days = len(prefs[0])
+  dim = NUM_SHIFTS * num_days
+  #SearchAgents_no = 30    # edit me
+  #Max_iter = 30           # edit me
+
+  # runs optimizer (to get answer)
+  raw_woa_ans = woa.WOA(objf, 1, 5, dim, SearchAgents, Max_iter)
+  raw_woa_ans_vect = raw_woa_ans.bestIndividual
+
+  raw_woa_ans_vect = [math.floor(elt) for elt in raw_woa_ans_vect]
+  woa_ans = restructure(raw_woa_ans_vect, len(prefs[0]))
+
+  return [woa_ans, raw_woa_ans.best]
+
+
+
+def doNurseOptimizationGA(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
+
+  # creates a benchmark function (called objf)
+  def objf(x):  # this is a closure, wheeeeee
+    # rounds every element, and then restructures into a rectangle
+    
+    assignment = restructure([round(thing) for thing in x], len(prefs[0]))
+
+    return calculationTotalAversionGA(prefs, assignment)
+
+  # sets up arguments for optimizer (dim, SearchAgents_no, Max_iter)
+  num_nurses = len(prefs)
+  num_days = len(prefs[0])
+  dim = num_nurses * num_days
+  #SearchAgents_no = 30     # edit me
+  #Max_iter = 50            # edit me
+
+  # runs optimizer (to get answer)
+  raw_woa_ans = ga.GA(objf, 0, 1, dim, SearchAgents, Max_iter)
+  raw_woa_ans_vect = raw_woa_ans.bestIndividual
+
+  #print('raw_woa_ans_vect \n', raw_woa_ans_vect)
+  raw_woa_ans_vect = [round(elt) for elt in raw_woa_ans_vect]
+  woa_ans = restructure(raw_woa_ans_vect, len(prefs[0]))
+
+  
+  return [woa_ans, raw_woa_ans.best]
+
+
+#----------tests-----------
+# functions to test our algorithms and return data
+
+def runTest2(prefs, searchagents, max_iter):
+  #run until feasible solution is found, count how many tries it took
+  feasible_solution = None
+  iterations = 0
+  sum_time = 0
+  while not feasible_solution:
+    start = time.time()
+    solution = doNurseOptimization(prefs, searchagents, max_iter)[1]
+    end = time.time()
+    sum_time += (end-start)
+    if solution < 700:
+      feasible_solution = solution
+    iterations += 1
+    if iterations > ATTEMPTS_ALLOWED:
+      iterations = ATTEMPTS_ALLOWED
+      break
+  avg_time = sum_time / iterations
+
+  # [the most optimal schedule, how many tries it took, how long it took on average]
+  return [solution, iterations, avg_time]
+  
+
+
+def runTest2GA(prefs, searchagents, max_iter):
+  #run until feasible solution is found, count how many tries it took
+  feasible_solution = None
+  iterations = 0
+  sum_time = 0
+
+  while not feasible_solution:
+    start = time.time()
+    solution = doNurseOptimizationGA(prefs, searchagents, max_iter)[1]
+    end = time.time()
+    sum_time += (end-start)
+    if solution < 700:
+      feasible_solution = solution
+    iterations += 1
+    if iterations > ATTEMPTS_ALLOWED:
+      iterations = ATTEMPTS_ALLOWED
+      break
+  avg_time = sum_time / iterations
+  
+  # [the most optimal schedule, how many tries it took, how long it took on average]
+  return [solution, iterations, avg_time]
+
+
+
+#outermost function, it runs our test cases
 def testAlgo(doWOA, doGA):
   COMBINATIONS = [range(10,3001,10), range(10,3001,10)]  
   AGENT_ITER_LIST_TEMP = list(itertools.product(*COMBINATIONS))
   AGENT_ITER_LIST = []
   max_iteration = 3000
   min_iteration = 200
-  test_iterations = 25
 
   
   for i in range(len(AGENT_ITER_LIST_TEMP)):
@@ -307,32 +306,17 @@ def testAlgo(doWOA, doGA):
 
 
   #WHAT IS SUCCESS RATE
-  # testAlgo loops test_iterations
+  # testAlgo loops over TEST_ITERATIONS
   # each iteration calls test2
   # test 2 runs until it finds a solution or breaks at ATTEMPTS_ALLOWED
   # success rate is how many testAlgo iterations (aka test2 calls) that found a viable solution before breaking
 
-
-
-  #print(AGENT_ITER_LIST)
- 
-  #------------test----------------
-
-  #results = [total runs, tries, search agents, iterations, time elapsed]
-
-  #   
-  #end_results = [searchagents*iterations, success_rate, average tries, searchagents, iterations, average time elapsed]
-
-  #sum_results = [[searchagents*iterations, tries, searchagents, iterations, time elapsed],
-                # [searchagents*iterations, tries, searchagents, iterations, time elapsed],
-                #  ...
-                # ]
-  
+  #test case using Whale Optimization Algorithm
   if doWOA:
     sum_results = []
-    for iteration in range(test_iterations):
+    for iteration in range(TEST_ITERATIONS):
       results = []
-      print('test iteration', iteration, 'of', test_iterations)
+      print('test iteration', iteration, 'of', TEST_ITERATIONS)
       for i in range(length):
         current_combination = AGENT_ITER_LIST[i]
         print('running test 2 with', str(current_combination), 'at iteration', str(i), 'of', str(length))
@@ -350,12 +334,12 @@ def testAlgo(doWOA, doGA):
 
     print('WOA complete')
 
-  
+  #test case using Genetic Algorithm
   if doGA:
     sum_results = []
-    for iteration in range(test_iterations):
+    for iteration in range(TEST_ITERATIONS):
       results = []
-      print('test iteration', iteration, 'of', test_iterations)
+      print('test iteration', iteration, 'of', TEST_ITERATIONS)
       for i in range(length):
         current_combination = AGENT_ITER_LIST[i]
         print('running test 2 with', str(current_combination), 'at iteration', str(i), 'of', str(length))
@@ -374,9 +358,16 @@ def testAlgo(doWOA, doGA):
     print('GA complete')
   
 
+#runs our tests
 testAlgo(False, True)
 
-#---------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+#---------------------------------OLD STUFF-------------------------------------------
+
 #boolean vs continuous problems
 #integer problems vs real value problems
 
@@ -697,7 +688,7 @@ def runTest1GA(prefs, searchagents, max_iter, test_iter):
 
     #create a format for calculating the average of rows
     new_temp = temp[0]
-    if new_temp[1] >= ATTEMPS_ALLOWED:  
+    if new_temp[1] >= ATTEMPTS_ALLOWED:  
       #new_temp = new_temp[0].append([0].append(new_temp[1:]))
       new_temp = [new_temp[0]] + [0] + new_temp[1:]
     else:
@@ -714,7 +705,7 @@ def runTest1GA(prefs, searchagents, max_iter, test_iter):
       
       new_temp[2] += temp[i][1]
       new_temp[5] += temp[i][4]
-      if not (temp[i][1] >= ATTEMPS_ALLOWED):
+      if not (temp[i][1] >= ATTEMPTS_ALLOWED):
         new_temp[1] += 1
 
       total += 1
