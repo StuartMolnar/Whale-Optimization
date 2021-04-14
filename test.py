@@ -186,3 +186,17 @@ for j in range(len(sum_results[0])):
     
 '''
 
+import csv
+
+filesheet = input('Write the name of filesheet to convert in current directory: ')
+
+with open(filesheet, 'r') as read_file:
+  data = csv.reader(read_file, delimiter=',')
+
+  results = []
+  for i in range(len(data)):
+    if i >= 2:
+      results.append(data[i])
+
+  print(results)
+
