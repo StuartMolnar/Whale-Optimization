@@ -40,10 +40,10 @@ prefs_input = [
 ]
 
 #how many tries we give our algorithm to find a viable solution
-ATTEMPTS_ALLOWED = 50
+ATTEMPTS_ALLOWED = 1
 
 #how many times we run the whole test to average out the randomness of our results
-TEST_ITERATIONS = 25
+TEST_ITERATIONS = 1
 
 
 #-----------------helper functions-------------- 
@@ -202,8 +202,19 @@ def doNurseOptimization(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
   raw_woa_ans = woa.WOA(objf, 1, 5, dim, SearchAgents, Max_iter)
   raw_woa_ans_vect = raw_woa_ans.bestIndividual
 
+  print('raw output')
+  print(raw_woa_ans_vect)
+  '''
+  for x in raw_woa_ans_vect:
+    print(x)
+  '''
+
   raw_woa_ans_vect = [math.floor(elt) for elt in raw_woa_ans_vect]
   woa_ans = restructure(raw_woa_ans_vect, len(prefs[0]))
+
+  print('converted output')
+  for x in woa_ans:
+    print(x)
 
   return [woa_ans, raw_woa_ans.best]
 
@@ -212,7 +223,7 @@ def doNurseOptimization(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
 def doNurseOptimizationGA(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
 
   # creates a benchmark function (called objf)
-  def objf(x):  # this is a closure, wheeeeee
+  def objf(x): 
     # rounds every element, and then restructures into a rectangle
     
     assignment = restructure([round(thing) for thing in x], len(prefs[0]))
@@ -229,6 +240,8 @@ def doNurseOptimizationGA(prefs, SearchAgents, Max_iter, optimizer_name='WOA'):
   # runs optimizer (to get answer)
   raw_woa_ans = ga.GA(objf, 0, 1, dim, SearchAgents, Max_iter)
   raw_woa_ans_vect = raw_woa_ans.bestIndividual
+
+  #print(raw_woa_ans_vect)
 
   #print('raw_woa_ans_vect \n', raw_woa_ans_vect)
   raw_woa_ans_vect = [round(elt) for elt in raw_woa_ans_vect]
@@ -290,11 +303,11 @@ def runTest2GA(prefs, searchagents, max_iter):
 
 #outermost function, it runs our test cases
 def testAlgo(doWOA, doGA):
-  COMBINATIONS = [range(10,3001,10), range(10,3001,10)]  
+  COMBINATIONS = [range(10,21,10), range(10,21,10)]  
   AGENT_ITER_LIST_TEMP = list(itertools.product(*COMBINATIONS))
   AGENT_ITER_LIST = []
-  max_iteration = 3000
-  min_iteration = 200
+  max_iteration = 400
+  min_iteration = 400
 
   
   for i in range(len(AGENT_ITER_LIST_TEMP)):
@@ -359,7 +372,7 @@ def testAlgo(doWOA, doGA):
   
 
 #runs our tests
-testAlgo(False, True)
+testAlgo(True, False)
 
 
 
